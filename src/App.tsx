@@ -1,53 +1,101 @@
-import React, {useEffect, useState} from 'react';
-import './App.css';
+import React, { FC, useMemo, useState } from "react";
+import "./App.css";
+import { atom, RecoilRoot, RecoilState, useRecoilState } from "recoil";
 
 function App() {
-    console.log("APP RENDERED")
-    const [loggedOut, setLoggedOut] = useState(false);
-
-    useEffect(() => {
-        if (loggedOut) window.alert("EFFECT");
-        localStorage.removeItem("item");
-    }, [loggedOut])
-
-    const setLocalStorage = () => {
-        console.log("set item");
-        localStorage.setItem("item", "item!");
-    }
-    
-    const setOther = () => {
-        console.log("set other");
-        localStorage.setItem("other", "other");
-    }
-
-    const removeLocalStorage = () => {
-        console.log("remove item");
-        localStorage.removeItem("item");
-    }
-    
-    const removeOther = () => {
-        console.log("remove other");
-        localStorage.removeItem("other");
-    }
-
-    window.addEventListener("storage", (e) => {
-        if (e.key === "item" && !e.oldValue && e.newValue && !loggedOut) setLoggedOut(true);
-    });
-
-    return (
-        <div className="App">
-            <main>
-                <div>
-                <button onClick={setLocalStorage}>SetLocalStorage</button>
-                <button onClick={removeLocalStorage}>RemoveLocalStorage</button>
-                </div>
-                <div>
-                    <button onClick={setOther}>SetOther</button>
-                    <button onClick={removeOther}>RemoveOther</button>
-                </div>
-            </main>
-        </div>
-    );
+  return (
+    <RecoilRoot>
+      <div className="App">
+        <main>
+          <p>AAAA</p>
+          <Inner />
+          <Inner2Wrapper />
+          <Inner3Wrapper />
+          <Inner4Wrapper />
+        </main>
+      </div>
+    </RecoilRoot>
+  );
 }
+
+const Inner = () => {
+  console.log("redraw");
+  const [state, setState] = useState(0);
+
+  return (
+    <div>
+      <button onClick={() => setState((prev) => prev + 1)}>increment</button>
+      <p>{state}</p>
+    </div>
+  );
+};
+
+const Inner2Wrapper = () => {
+  console.log("Inner2Wrapper redraw");
+  const [state, setState] = useState(0);
+
+  return (
+    <div>
+      <button onClick={() => setState((prev) => prev + 1)}>increment</button>
+      <Inner2 state={state} />
+    </div>
+  );
+};
+
+const Inner2: FC<{ state: number }> = ({ state }) => {
+  console.log("Inner2 redraw");
+  return (
+    <div>
+      <p>{state}</p>
+    </div>
+  );
+};
+
+const Inner3Wrapper = () => {
+  console.log("Inner3Wrapper redraw");
+  const stateAtom = useMemo(
+    () =>
+      atom({
+        key: `${new Date()}/${Math.random()}`,
+        default: 0,
+      }),
+    []
+  );
+
+  return <Inner3 stateAtom={stateAtom} />;
+};
+
+const Inner3: FC<{ stateAtom: RecoilState<number> }> = ({ stateAtom }) => {
+  console.log("Inner3 redraw");
+  const [state, setState] = useRecoilState(stateAtom);
+
+  return (
+    <div>
+      <button onClick={() => setState((prev) => prev + 1)}>increment</button>
+      <p>{state}</p>
+    </div>
+  );
+};
+
+const IndependentAtom = atom({
+  key: `independent/${Math.random()}`,
+  default: 0,
+});
+
+const Inner4Wrapper = () => {
+  console.log("Inner4Wrapper redraw");
+  return <Inner4 />;
+};
+
+const Inner4 = () => {
+  console.log("Inner4 redraw");
+  const [state, setState] = useRecoilState(IndependentAtom);
+  return (
+    <div>
+      <button onClick={() => setState((prev) => prev + 1)}>increment</button>
+      <p>{state}</p>
+    </div>
+  );
+};
 
 export default App;
